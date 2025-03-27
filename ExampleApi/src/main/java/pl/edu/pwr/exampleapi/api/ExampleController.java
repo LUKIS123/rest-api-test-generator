@@ -1,6 +1,7 @@
 package pl.edu.pwr.exampleapi.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.pwr.exampleapi.models.CreateOrderDto;
@@ -41,8 +42,9 @@ public class ExampleController {
     public ResponseEntity<OrderDto> getById(
             @PathVariable(value = "id") Long id
     ) {
-        return ResponseEntity.ok().body(exampleServiceImplementation.findById(id)
-                .orElse(null));
+        return exampleServiceImplementation.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(OrderDto.emptyOrder()));
     }
 
     @GetMapping("/customer")

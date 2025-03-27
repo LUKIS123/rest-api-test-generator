@@ -17,5 +17,5 @@ import java.util.Date;
 public class CreateOrderDto {
     private Date orderDate;
     private String customerName;
-    private Collection<OrderItemDto> items = new ArrayList<>();
+    private Collection<CreateOrderItemDto> items = new ArrayList<>();
 }

@@ -4,11 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pl.edu.pwr.exampleapi.dao.OrderRepository;
 import pl.edu.pwr.exampleapi.dao.entity.Order;
-import pl.edu.pwr.exampleapi.models.CreateOrderDto;
-import pl.edu.pwr.exampleapi.models.OrderDto;
-import pl.edu.pwr.exampleapi.models.PageResult;
-import pl.edu.pwr.exampleapi.models.QueryResult;
+import pl.edu.pwr.exampleapi.models.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,21 +21,14 @@ public class ExampleServiceImplementation implements ExampleService {
 
     @Override
     public Long save(CreateOrderDto createOrderDto) {
-
-
-        return 0L;
+        return orderRepository.save(createOrderDto);
     }
 
     @Override
     public Optional<OrderDto> findById(Long id) {
-        Order byId = orderRepository.findById(id);
-        return Optional.ofNullable(byId).map(o -> {
-            OrderDto orderDto = new OrderDto();
-            orderDto.setCustomerName(o.getCustomerName());
-            orderDto.setOrderDate(o.getOrderDate());
-            orderDto.setId(o.getId());
-            return orderDto;
-        });
+        return orderRepository.findById(id)
+                .map(ExampleServiceImplementation::mapOrderToOrderDto)
+                .or(Optional::empty);
     }
 
     @Override
@@ -54,18 +45,35 @@ public class ExampleServiceImplementation implements ExampleService {
         return new PageResult<>(orderDtos, result.totalItemCount().intValue(), pageSize, pageNumber);
     }
 
-    private List<OrderDto> mapOrderDtoList(QueryResult<Order> result) {
-        return result.items().stream().map(order -> {
-            OrderDto orderDto = new OrderDto();
-            orderDto.setCustomerName(order.getCustomerName());
-            orderDto.setOrderDate(order.getOrderDate());
-            orderDto.setId(order.getId());
-            return orderDto;
-        }).toList();
-    }
-
     @Override
     public void deleteById(Long id) {
         orderRepository.deleteById(id);
+    }
+
+    private static List<OrderDto> mapOrderDtoList(QueryResult<Order> result) {
+        return result.items().stream()
+                .map(ExampleServiceImplementation::mapOrderToOrderDto)
+                .toList();
+    }
+
+    private static OrderDto mapOrderToOrderDto(Order order) {
+        OrderDto orderDto = OrderDto.builder()
+                .customerName(order.getCustomerName())
+                .orderDate(order.getOrderDate())
+                .id(order.getId())
+                .items(new ArrayList<>())
+                .build();
+
+        List<OrderItemDto> itemsList = order.getItems().stream().map(item ->
+                OrderItemDto.builder()
+                        .price(item.getPrice())
+                        .productName(item.getProductName())
+                        .quantity(item.getQuantity())
+                        .id(item.getId())
+                        .build()).toList();
+
+        orderDto.setItems(itemsList);
+
+        return orderDto;
     }
 }
