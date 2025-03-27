@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'pl.edu.pwr'
+version = '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = '21'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'pl.edu.pwr.Main'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Class-Path': configurations.collect { it.getName() }.join(' '),
+                'Main-Class': 'pl.edu.pwr.Main'
+        )
+    }
+    from sourceSets.main.allSource
+}
+
+tasks.register('fatJar', Jar) {
+    manifest {
+        attributes(
+                'Class-Path': configurations.collect { it.getName() }.join(' '),
+                'Main-Class': 'pl.edu.pwr.Main'
+        )
+    }
+    from sourceSets.main.allSource
+    archiveBaseName = project.name + '-all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

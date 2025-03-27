@@ -1,0 +1,3 @@
+rootProject.name = 'rest-api-test-generator'
+include 'rest-assured-test-generator', 'example-api'
+
