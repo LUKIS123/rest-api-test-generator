@@ -41,3 +41,4 @@ bin/
 ### Mac OS ###
 .DS_Store
 .idea
+rest-assured-test-generator/src/main/gen

@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'antlr'
 }
 
 group = 'pl.edu.pwr'
@@ -12,8 +13,49 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    // https://mvnrepository.com/artifact/org.antlr/antlr4-runtime
+    antlr 'org.antlr:antlr4:4.13.2'
+    implementation "org.antlr:antlr4-runtime:4.13.2"
+    // https://mvnrepository.com/artifact/org.antlr/antlr4
+    implementation "org.antlr:antlr4:4.13.2"
+    // https://mvnrepository.com/artifact/org.antlr/ST4
+    implementation "org.antlr:ST4:4.3.4"
 }
 
 test {
     useJUnitPlatform()
+}
+
+//// Configure ANTLR task
+//generateGrammarSource {
+//    arguments += ['-visitor', '-no-listener'] // Optional: Generate visitor, disable listener
+//    outputDirectory = file("$buildDir/generated-src/antlr/main")
+//}
+//
+//// Include generated ANTLR sources in main source set
+//sourceSets.main.java.srcDirs += "$buildDir/gen"
+
+
+// Define grammar package variable
+def grammarPackage = "pl.edu.pwr.grammar"
+
+tasks.generateGrammarSource {
+    source = fileTree("pl.edu.pwr.grammar")
+    outputDirectory = file("src/main/gen/${grammarPackage.replace('.', '/')}")
+    arguments = ["-visitor", "-no-listener", "-package", grammarPackage, "-Dlanguage=Java"]
+}
+
+tasks.compileJava {
+    dependsOn tasks.generateGrammarSource
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ["src/main/gen", "src/main/java"]
+    }
+}
+
+tasks.build {
+    dependsOn tasks.generateGrammarSource
 }

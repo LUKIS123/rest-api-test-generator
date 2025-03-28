@@ -1,17 +1,33 @@
 package pl.edu.pwr;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-        }
+import pl.edu.pwr.grammar.TestGeneratorLexer;
+import pl.edu.pwr.grammar.TestGeneratorParser;
+
+import pl.edu.pwr.compiler.GeneratorCommandVisitor;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        // create a CharStream that reads from standard input
+        CharStream input = CharStreams.fromStream(System.in);
+
+        // create a lexer that feeds off of input CharStream
+        TestGeneratorLexer lexer = new TestGeneratorLexer(input);
+
+        // create a buffer of tokens pulled from the lexer
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+        // create a parser that feeds off the tokens buffer
+        TestGeneratorParser parser = new TestGeneratorParser(tokens);
+
+        // start parsing at the program rule
+        ParseTree tree = parser.program();
+        // System.out.println(tree.toStringTree(parser));
+
+        // create a visitor to traverse the parse tree
+        GeneratorCommandVisitor visitor = new GeneratorCommandVisitor();
+//        System.out.println(visitor.visit(tree));
     }
 }

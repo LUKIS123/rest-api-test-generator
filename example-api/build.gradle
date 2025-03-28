@@ -47,6 +47,7 @@ dependencies {
 }
 
 tasks.named('test') {
+    // https://stackoverflow.com/questions/79278490/mockito-is-currently-self-attaching-to-enable-the-inline-mock-maker-this-will-n
     jvmArgs "-javaagent:${configurations.testRuntimeClasspath.find { it.name.contains('mockito-core') }}", '-Xshare:off'
     useJUnitPlatform()
 }
