@@ -1,15 +1,17 @@
 package pl.edu.pwr;
 
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
-
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import pl.edu.pwr.compiler.GeneratorCommandVisitor;
 import pl.edu.pwr.grammar.TestGeneratorLexer;
 import pl.edu.pwr.grammar.TestGeneratorParser;
 
-import pl.edu.pwr.compiler.GeneratorCommandVisitor;
+import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         // create a CharStream that reads from standard input
         CharStream input = CharStreams.fromStream(System.in);
 
@@ -28,6 +30,6 @@ public class Main {
 
         // create a visitor to traverse the parse tree
         GeneratorCommandVisitor visitor = new GeneratorCommandVisitor();
-//        System.out.println(visitor.visit(tree));
+        System.out.println(visitor.visit(tree));
     }
 }

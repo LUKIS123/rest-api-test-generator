@@ -1,5 +1,6 @@
 package pl.edu.pwr.compiler;
 
-public class GeneratorCommandVisitor  {
+import pl.edu.pwr.grammar.TestGeneratorParserBaseVisitor;
 
+public class GeneratorCommandVisitor extends TestGeneratorParserBaseVisitor<Integer> {
 }

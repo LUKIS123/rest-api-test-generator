@@ -1,14 +1,10 @@
 plugins {
     id 'java'
-    id 'application'
+    id 'antlr'
 }
 
 group = 'pl.edu.pwr'
 version = '1.0-SNAPSHOT'
-
-java {
-    sourceCompatibility = '21'
-}
 
 repositories {
     mavenCentral()
@@ -17,36 +13,38 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    // https://mvnrepository.com/artifact/org.antlr/antlr4-runtime
+    antlr 'org.antlr:antlr4:4.13.2'
+    implementation "org.antlr:antlr4-runtime:4.13.2"
+    // https://mvnrepository.com/artifact/org.antlr/antlr4
+    implementation "org.antlr:antlr4:4.13.2"
+    // https://mvnrepository.com/artifact/org.antlr/ST4
+    implementation "org.antlr:ST4:4.3.4"
 }
 
 test {
     useJUnitPlatform()
 }
 
-application {
-    mainClass = 'pl.edu.pwr.Main'
+def grammarPackage = "pl.edu.pwr.grammar"
+
+tasks.generateGrammarSource {
+    source = fileTree("src/main/antlr")
+    outputDirectory = file("src/main/gen/${grammarPackage.replace('.', '/')}")
+    arguments = ["-visitor", "-no-listener", "-package", grammarPackage, "-Dlanguage=Java"]
 }
 
-jar {
-    manifest {
-        attributes(
-                'Class-Path': configurations.collect { it.getName() }.join(' '),
-                'Main-Class': 'pl.edu.pwr.Main'
-        )
-    }
-    from sourceSets.main.allSource
+tasks.compileJava {
+    dependsOn tasks.generateGrammarSource
 }
 
-tasks.register('fatJar', Jar) {
-    manifest {
-        attributes(
-                'Class-Path': configurations.collect { it.getName() }.join(' '),
-                'Main-Class': 'pl.edu.pwr.Main'
-        )
+sourceSets {
+    main {
+        java.srcDirs = ["src/main/gen", "src/main/java"]
     }
-    from sourceSets.main.allSource
-    archiveBaseName = project.name + '-all'
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+}
+
+tasks.build {
+    dependsOn tasks.generateGrammarSource
 }
