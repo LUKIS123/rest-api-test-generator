@@ -3,6 +3,9 @@ group TestGenerator;
 deflt(elem) ::= <<
     <elem; separator="\n">
 >>
+combinedTemplate(content) ::= <<
+<content; separator="\n">
+>>
 
 initTestMethod(name, request, assert, close) ::= <<
     @Test
@@ -17,11 +20,9 @@ initTestMethod(name, request, assert, close) ::= <<
 baseUri(uri) ::= <<
                 .baseUri("<uri>")
 >>
-
 port(port) ::= <<
                 .port(<port>)
 >>
-
 basePath(path) ::= <<
                 .basePath("<path>")
 >>
@@ -37,14 +38,58 @@ requestAddress(uri, path) ::= <<
 <basePath(path)>
 >>
 
-
-getRequest(path) ::= <<
-                .when()
-                .get("<path>")
-                .then()
+requestHeaders(headerKey, headerValue) ::= <<
+                .header("<headerKey>", "<headerValue>")
 >>
 
-makeRequest(request, method) ::= <<
+getRequest(path) ::= <<
+            .when()
+                .get("<path>")
+            .then()
+>>
+postRequest(path) ::= <<
+            .when()
+                .post("<path>")
+            .then()
+>>
+putRequest(path) ::= <<
+            .when()
+                .put("<path>")
+            .then()
+>>
+patchRequest(path) ::= <<
+            .when()
+                .patch("<path>")
+            .then()
+>>
+deleteRequest(path) ::= <<
+            .when()
+                .delete("<path>")
+            .then()
+>>
+
+makeRequest(request, headers, method) ::= <<
 <request>
+<headers>
 <method>
+>>
+
+
+assertStatusCode(code) ::= <<
+                .statusCode(<code>)
+>>
+assertBodyContains(prop) ::= <<
+                .body(containsString("<prop>"))
+>>
+assertBodyExact(prop, value) ::= <<
+                .body("<prop>", equalTo("<value>"))
+>>
+assertResponseHeader(header, value) ::= <<
+                .header("<header>", containsString("<value>"))
+>>
+
+validateRequest(responseCodeAssertion, responseBodyAssertions, responseHeadersAssertions) ::= <<
+<responseCodeAssertion>
+<responseBodyAssertions>
+<responseHeadersAssertions>
 >>

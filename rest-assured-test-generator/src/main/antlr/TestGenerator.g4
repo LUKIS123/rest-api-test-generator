@@ -26,10 +26,12 @@ queryParam  : STRING '=' STRING;
 body    : 'BODY' STRING;
 
 // Assertions
-validate  : 'ASSERT' '{' statusCode (responseBody)? (responseHeaders)? '}';
-statusCode : 'STATUS' INT;
-responseBody : 'BODY_CONTAINS' STRING;
-responseHeaders : 'HEADER' '{' header+ '}';
+validate       : 'ASSERT' '{' statusCode (responseBody)? (responseHeaders)? '}';
+statusCode     : 'STATUS' INT;
+responseBody   : (bodyContains | bodyExact)+;
+bodyContains   : 'BODY_CONTAINS' STRING;           // Check if a field exists
+bodyExact      : 'BODY_EXACT' STRING '=' STRING;   // Check if a field has an exact value
+responseHeaders: 'HEADER' header+;
 
 // Tokens
 HTTP_METHOD : 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';

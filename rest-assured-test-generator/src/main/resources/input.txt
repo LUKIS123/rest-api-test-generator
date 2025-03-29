@@ -2,9 +2,9 @@ TEST myTest {
     REQUEST {
         METHOD GET
         URL "https://api.example.com/users"
-//        HEADERS {
-//            "Authorization": "Bearer token"
-//        }
+        HEADERS {
+            "Authorization": "Bearer token"
+        }
         QUERY_PARAMS {
             "id" = "123"
         }
@@ -12,8 +12,9 @@ TEST myTest {
     ASSERT {
         STATUS 200
         BODY_CONTAINS "username"
-//        HEADER {
-//            "Content-Type": "application/json"
-//        }
+        BODY_CONTAINS "password"
+        BODY_EXACT "id" = "123"
+        BODY_EXACT "name" = "John Doe"
+        HEADER "Content-Type": "application/json" "Location": "https://api.example.com/users/123"
     }
 }

@@ -8,6 +8,7 @@ import pl.edu.pwr.grammar.TestGeneratorParser;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 
 public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
@@ -34,7 +35,12 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitTerminal(TerminalNode node) {
-        return new ST("Terminal node:<n>").add("n", node.getText());
+        String nodeText = node.getText();
+        if (nodeText.equals("<EOF>")) {
+            return null;
+        }
+
+        return new ST("Terminal node:<n>").add("n", nodeText);
     }
 
     @Override
@@ -43,11 +49,15 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
         ST testMethodSt = stGroup.getInstanceOf("initTestMethod");
         testMethodSt.add("name", testMethodName);
 
-        ST requestSt = visit(ctx.request());
-        ST assertSt = visit(ctx.validate());
+        try {
+            ST requestSt = visit(ctx.request());
+            testMethodSt.add("request", requestSt);
 
-        testMethodSt.add("request", requestSt);
-        testMethodSt.add("assert", assertSt);
+            ST assertSt = visit(ctx.validate());
+            testMethodSt.add("assert", assertSt);
+        } catch (Exception e) {
+            System.err.println("Error in test method: " + e.getMessage());
+        }
 
         return testMethodSt;
     }
@@ -55,11 +65,20 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     @Override
     public ST visitRequest(TestGeneratorParser.RequestContext ctx) {
         ST requestSt = stGroup.getInstanceOf("makeRequest");
+        try {
+            ST urlSt = visit(ctx.url()); // TODO: w przyszłości można dodać opcję żeby globalnie ustawić adres bazowy
+            requestSt.add("request", urlSt);
 
-        ST urlSt = visit(ctx.url());
-        ST methodSt = visit(ctx.method());
+            ST headersSt = visit(ctx.headers());
+            requestSt.add("headers", headersSt);
 
-        requestSt.add("request", urlSt).add("method", methodSt);
+            ST methodSt = visit(ctx.method());
+            requestSt.add("method", methodSt);
+        } catch (Exception e) {
+            System.err.println("Error in request: " + e.getMessage());
+            e.printStackTrace(); // Print stack trace for debugging
+        }
+
         return requestSt;
     }
 
@@ -115,11 +134,88 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
         }
     }
 
-    //    @Override
-//    public ST visitStatusCode(TestGeneratorParser.StatusCodeContext ctx) {
-//        ST st = stGroup.getInstanceOf("int");
-//        st.add("i", ctx.INT().getText());
-//        return st;
-//    }
+    @Override
+    public ST visitHeaders(TestGeneratorParser.HeadersContext ctx) {
+        ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
 
+        List<TestGeneratorParser.HeaderContext> headerContexts = ctx.header();
+        for (TestGeneratorParser.HeaderContext headerContext : headerContexts) {
+            ST headersSt = stGroup.getInstanceOf("requestHeaders");
+            List<TerminalNode> keyValuePairs = headerContext.STRING();
+            String headerName = keyValuePairs.get(0).getText().substring(1, keyValuePairs.get(0).getText().length() - 1);
+            headersSt.add("headerKey", headerName);
+            String headerValue = keyValuePairs.get(1).getText().substring(1, keyValuePairs.get(1).getText().length() - 1);
+            headersSt.add("headerValue", headerValue);
+            combinedTemplate.add("content", headersSt);
+        }
+
+        return combinedTemplate;
+    }
+
+    @Override
+    public ST visitValidate(TestGeneratorParser.ValidateContext ctx) {
+        ST validateSt = stGroup.getInstanceOf("validateRequest");
+        try {
+            ST statusCodeSt = visit(ctx.statusCode());
+            validateSt.add("responseCodeAssertion", statusCodeSt);
+
+            ST bodyAssertionsSt = visit(ctx.responseBody());
+            validateSt.add("responseBodyAssertions", bodyAssertionsSt);
+
+            ST headerAssertionsSt = visit(ctx.responseHeaders());
+            validateSt.add("responseHeadersAssertions", headerAssertionsSt);
+        } catch (Exception e) {
+            System.err.println("Error in validate: " + e.getMessage());
+            e.printStackTrace(); // Print stack trace for debugging
+        }
+
+        return validateSt;
+    }
+
+    @Override
+    public ST visitStatusCode(TestGeneratorParser.StatusCodeContext ctx) {
+        ST statusCodeSt = stGroup.getInstanceOf("assertStatusCode");
+        statusCodeSt.add("code", ctx.INT().getText());
+        return statusCodeSt;
+    }
+
+    @Override
+    public ST visitResponseBody(TestGeneratorParser.ResponseBodyContext ctx) {
+        ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
+
+        List<TestGeneratorParser.BodyContainsContext> bodyContainsContexts = ctx.bodyContains();
+        for (TestGeneratorParser.BodyContainsContext bodyContainsContext : bodyContainsContexts) {
+            ST bodyContainsSt = stGroup.getInstanceOf("assertBodyContains");
+            String propertyName = bodyContainsContext.STRING().getText().substring(1, bodyContainsContext.STRING().getText().length() - 1);
+            bodyContainsSt.add("prop", propertyName);
+            combinedTemplate.add("content", bodyContainsSt);
+        }
+
+        List<TestGeneratorParser.BodyExactContext> bodyExactContexts = ctx.bodyExact();
+        for (TestGeneratorParser.BodyExactContext bodyExactContext : bodyExactContexts) {
+            ST bodyExactSt = stGroup.getInstanceOf("assertBodyExact");
+            List<TerminalNode> keyValuePairs = bodyExactContext.STRING();
+            bodyExactSt.add("prop", keyValuePairs.get(0).getText().substring(1, keyValuePairs.get(0).getText().length() - 1));
+            bodyExactSt.add("value", keyValuePairs.get(1).getText().substring(1, keyValuePairs.get(1).getText().length() - 1));
+            combinedTemplate.add("content", bodyExactSt);
+        }
+
+        return combinedTemplate;
+    }
+
+    @Override
+    public ST visitResponseHeaders(TestGeneratorParser.ResponseHeadersContext ctx) {
+        ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
+
+        List<TestGeneratorParser.HeaderContext> headerContexts = ctx.header();
+        for (TestGeneratorParser.HeaderContext headerContext : headerContexts) {
+            ST headerSt = stGroup.getInstanceOf("assertResponseHeader");
+            List<TerminalNode> keyValuePairs = headerContext.STRING();
+            headerSt.add("header", keyValuePairs.get(0).getText().substring(1, keyValuePairs.get(0).getText().length() - 1));
+            headerSt.add("value", keyValuePairs.get(1).getText().substring(1, keyValuePairs.get(1).getText().length() - 1));
+            combinedTemplate.add("content", headerSt);
+        }
+
+        return combinedTemplate;
+    }
 }

@@ -3,15 +3,15 @@
             given()
                     .baseUri("https://api.example.com")
                     .basePath("/users")
-                    .when()
+                    .header("Authorization", "Bearer token")
+                .when()
                     .get("")
-                    .then()
-        Terminal node:ASSERT
-        Terminal node:{
-            Terminal node:STATUS
-            Terminal node:200
-            Terminal node:BODY_CONTAINS
-            Terminal node:"username"
-        Terminal node:}
+                .then()
+                    .statusCode(200)
+                    .body(containsString("username"))
+                    .body(containsString("password"))
+                    .body("id", equalTo("123"))
+                    .body("name", equalTo("John Doe"))
+                    .header("Content-Type", containsString("application/json"))
+                    .header("Location", containsString("https://api.example.com/users/123"))
         }
-    Terminal node:<EOF>
