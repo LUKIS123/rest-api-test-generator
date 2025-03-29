@@ -3,7 +3,7 @@ grammar TestGenerator;
 program : test* EOF ;
 
 // Entry point
-test    : 'TEST' NAME '{' request assert '}';
+test    : 'TEST' NAME '{' request validate '}';
 
 // Request definition
 request : 'REQUEST' '{' method url (headers)? (queryParams)? (body)? '}';
@@ -26,7 +26,7 @@ queryParam  : STRING '=' STRING;
 body    : 'BODY' STRING;
 
 // Assertions
-assert  : 'ASSERT' '{' statusCode (responseBody)? (responseHeaders)? '}';
+validate  : 'ASSERT' '{' statusCode (responseBody)? (responseHeaders)? '}';
 statusCode : 'STATUS' INT;
 responseBody : 'BODY_CONTAINS' STRING;
 responseHeaders : 'HEADER' '{' header+ '}';

@@ -4,3 +4,47 @@ deflt(elem) ::= <<
     <elem; separator="\n">
 >>
 
+initTestMethod(name, request, assert, close) ::= <<
+    @Test
+    void <name>() {
+        given()
+<request>
+<assert>
+    }
+>>
+
+
+baseUri(uri) ::= <<
+                .baseUri("<uri>")
+>>
+
+port(port) ::= <<
+                .port(<port>)
+>>
+
+basePath(path) ::= <<
+                .basePath("<path>")
+>>
+
+requestFullAddress(uri, port, path) ::= <<
+<baseUri(uri)>
+<port(port)>
+<basePath(path)>
+>>
+
+requestAddress(uri, path) ::= <<
+<baseUri(uri)>
+<basePath(path)>
+>>
+
+
+getRequest(path) ::= <<
+                .when()
+                .get("<path>")
+                .then()
+>>
+
+makeRequest(request, method) ::= <<
+<request>
+<method>
+>>
