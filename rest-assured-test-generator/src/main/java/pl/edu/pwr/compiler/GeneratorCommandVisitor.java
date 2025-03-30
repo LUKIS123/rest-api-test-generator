@@ -64,16 +64,19 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitRequest(TestGeneratorParser.RequestContext ctx) {
-        ST requestSt = stGroup.getInstanceOf("makeRequest");
+        ST requestSt = stGroup.getInstanceOf("fourSectionTemplate");
         try {
             ST urlSt = visit(ctx.url()); // TODO: w przyszłości można dodać opcję żeby globalnie ustawić adres bazowy
-            requestSt.add("request", urlSt);
+            requestSt.add("content1", urlSt);
 
             ST headersSt = visit(ctx.headers());
-            requestSt.add("headers", headersSt);
+            requestSt.add("content2", headersSt);
+
+            ST querySt = visit(ctx.queryParams());
+            requestSt.add("content3", querySt);
 
             ST methodSt = visit(ctx.method());
-            requestSt.add("method", methodSt);
+            requestSt.add("content4", methodSt);
         } catch (Exception e) {
             System.err.println("Error in request: " + e.getMessage());
             e.printStackTrace(); // Print stack trace for debugging
@@ -97,7 +100,15 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
         }
 
         ST method = stGroup.getInstanceOf(templateName);
-        method.add("path", "");
+
+        TerminalNode endpointCall = ctx.STRING();
+        if (endpointCall != null) {
+            String endpointCallText = endpointCall.getText();
+            if (endpointCallText != null && !endpointCallText.isBlank()) {
+                method.add("path", endpointCall);
+            }
+        }
+
         return method;
     }
 
@@ -135,6 +146,33 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     }
 
     @Override
+    public ST visitQueryParams(TestGeneratorParser.QueryParamsContext ctx) {
+        ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
+
+        List<TestGeneratorParser.QueryParamContext> queryParamContexts = ctx.queryParam();
+        for (TestGeneratorParser.QueryParamContext queryParamContext : queryParamContexts) {
+            ST queryParamSt = visit(queryParamContext);
+            combinedTemplate.add("content", queryParamSt);
+        }
+
+        return combinedTemplate;
+    }
+
+    @Override
+    public ST visitQueryParam(TestGeneratorParser.QueryParamContext ctx) {
+        ST queryParamSt = stGroup.getInstanceOf("requestQueryParams");
+        List<TerminalNode> keyValuePairs = ctx.STRING();
+
+        String key = keyValuePairs.get(0).getText();
+        queryParamSt.add("queryKey", key.substring(1, key.length() - 1));
+
+        String value = keyValuePairs.get(1).getText();
+        queryParamSt.add("value", Helper.getValidJsonValue(value));
+
+        return queryParamSt;
+    }
+
+    @Override
     public ST visitHeaders(TestGeneratorParser.HeadersContext ctx) {
         ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
 
@@ -154,16 +192,16 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitValidate(TestGeneratorParser.ValidateContext ctx) {
-        ST validateSt = stGroup.getInstanceOf("validateRequest");
+        ST validateSt = stGroup.getInstanceOf("threeSectionTemplate");
         try {
             ST statusCodeSt = visit(ctx.statusCode());
-            validateSt.add("responseCodeAssertion", statusCodeSt);
+            validateSt.add("content1", statusCodeSt);
 
             ST bodyAssertionsSt = visit(ctx.responseBody());
-            validateSt.add("responseBodyAssertions", bodyAssertionsSt);
+            validateSt.add("content2", bodyAssertionsSt);
 
             ST headerAssertionsSt = visit(ctx.responseHeaders());
-            validateSt.add("responseHeadersAssertions", headerAssertionsSt);
+            validateSt.add("content3", headerAssertionsSt);
         } catch (Exception e) {
             System.err.println("Error in validate: " + e.getMessage());
             e.printStackTrace(); // Print stack trace for debugging
@@ -185,22 +223,59 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
         List<TestGeneratorParser.BodyContainsContext> bodyContainsContexts = ctx.bodyContains();
         for (TestGeneratorParser.BodyContainsContext bodyContainsContext : bodyContainsContexts) {
-            ST bodyContainsSt = stGroup.getInstanceOf("assertBodyContains");
-            String propertyName = bodyContainsContext.STRING().getText().substring(1, bodyContainsContext.STRING().getText().length() - 1);
-            bodyContainsSt.add("prop", propertyName);
+            ST bodyContainsSt = visit(bodyContainsContext);
             combinedTemplate.add("content", bodyContainsSt);
         }
 
         List<TestGeneratorParser.BodyExactContext> bodyExactContexts = ctx.bodyExact();
         for (TestGeneratorParser.BodyExactContext bodyExactContext : bodyExactContexts) {
-            ST bodyExactSt = stGroup.getInstanceOf("assertBodyExact");
-            List<TerminalNode> keyValuePairs = bodyExactContext.STRING();
-            bodyExactSt.add("prop", keyValuePairs.get(0).getText().substring(1, keyValuePairs.get(0).getText().length() - 1));
-            bodyExactSt.add("value", keyValuePairs.get(1).getText().substring(1, keyValuePairs.get(1).getText().length() - 1));
+            ST bodyExactSt = visit(bodyExactContext);
             combinedTemplate.add("content", bodyExactSt);
         }
 
         return combinedTemplate;
+    }
+
+    @Override
+    public ST visitBodyContains(TestGeneratorParser.BodyContainsContext ctx) {
+        ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
+
+        List<TerminalNode> propertyNames = ctx.STRING();
+        for (TerminalNode propertyName : propertyNames) {
+            ST bodyContainsSt = stGroup.getInstanceOf("assertBodyContains");
+            String propertyNameText = propertyName.getText().substring(1, propertyName.getText().length() - 1);
+            bodyContainsSt.add("prop", propertyNameText);
+            combinedTemplate.add("content", bodyContainsSt);
+        }
+
+        return combinedTemplate;
+    }
+
+    @Override
+    public ST visitBodyExact(TestGeneratorParser.BodyExactContext ctx) {
+        ST combinedTemplate = stGroup.getInstanceOf("combinedTemplate");
+
+        List<TestGeneratorParser.BodyExactPairContext> bodyExactPairContexts = ctx.bodyExactPair();
+        for (TestGeneratorParser.BodyExactPairContext bodyExactPairContext : bodyExactPairContexts) {
+            ST visit = visit(bodyExactPairContext);
+            combinedTemplate.add("content", visit);
+        }
+
+        return combinedTemplate;
+    }
+
+    @Override
+    public ST visitBodyExactPair(TestGeneratorParser.BodyExactPairContext ctx) {
+        ST bodyExactSt = stGroup.getInstanceOf("assertBodyExact");
+        List<TerminalNode> keyValuePairs = ctx.STRING();
+
+        String key = keyValuePairs.get(0).getText();
+        bodyExactSt.add("prop", key.substring(1, key.length() - 1));
+
+        String value = keyValuePairs.get(1).getText();
+        bodyExactSt.add("value", Helper.getValidJsonValue(value));
+
+        return bodyExactSt;
     }
 
     @Override
@@ -211,8 +286,10 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
         for (TestGeneratorParser.HeaderContext headerContext : headerContexts) {
             ST headerSt = stGroup.getInstanceOf("assertResponseHeader");
             List<TerminalNode> keyValuePairs = headerContext.STRING();
-            headerSt.add("header", keyValuePairs.get(0).getText().substring(1, keyValuePairs.get(0).getText().length() - 1));
-            headerSt.add("value", keyValuePairs.get(1).getText().substring(1, keyValuePairs.get(1).getText().length() - 1));
+            String headerName = keyValuePairs.get(0).getText();
+            headerSt.add("header", headerName.substring(1, headerName.length() - 1));
+            String headerValue = keyValuePairs.get(1).getText();
+            headerSt.add("value", headerValue.substring(1, headerValue.length() - 1));
             combinedTemplate.add("content", headerSt);
         }
 

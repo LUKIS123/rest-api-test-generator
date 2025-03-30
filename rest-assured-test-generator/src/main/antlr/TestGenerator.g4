@@ -9,7 +9,7 @@ test    : 'TEST' NAME '{' request validate '}';
 request : 'REQUEST' '{' method url (headers)? (queryParams)? (body)? '}';
 
 // HTTP method
-method  : 'METHOD' HTTP_METHOD;
+method  : 'METHOD' HTTP_METHOD (STRING)?;
 
 // URL
 url     : 'URL' STRING;
@@ -28,9 +28,10 @@ body    : 'BODY' STRING;
 // Assertions
 validate       : 'ASSERT' '{' statusCode (responseBody)? (responseHeaders)? '}';
 statusCode     : 'STATUS' INT;
-responseBody   : (bodyContains | bodyExact)+;
-bodyContains   : 'BODY_CONTAINS' STRING;           // Check if a field exists
-bodyExact      : 'BODY_EXACT' STRING '=' STRING;   // Check if a field has an exact value
+responseBody   : (bodyContains | bodyExact)*;
+bodyContains   : 'BODY_CONTAINS' STRING+;       // Check if a field exists
+bodyExact      : 'BODY_EXACT' bodyExactPair+;   // Check if a field has an exact value
+bodyExactPair  : STRING '=' STRING;
 responseHeaders: 'HEADER' header+;
 
 // Tokens

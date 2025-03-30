@@ -6,13 +6,29 @@ deflt(elem) ::= <<
 combinedTemplate(content) ::= <<
 <content; separator="\n">
 >>
+twoSectionTemplate(content1, content2) ::= <<
+<content1>
+<content2>
+>>
+threeSectionTemplate(content1, content2, content3) ::= <<
+<content1>
+<content2>
+<content3>
+>>
+fourSectionTemplate(content1, content2, content3, content4) ::= <<
+<content1>
+<content2>
+<content3>
+<content4>
+>>
+
 
 initTestMethod(name, request, assert, close) ::= <<
     @Test
     void <name>() {
         given()
 <request>
-<assert>
+<assert>;
     }
 >>
 
@@ -42,9 +58,13 @@ requestHeaders(headerKey, headerValue) ::= <<
                 .header("<headerKey>", "<headerValue>")
 >>
 
+requestQueryParams(queryKey, value) ::= <<
+                .queryParam("<queryKey>", <value>)
+>>
+
 getRequest(path) ::= <<
             .when()
-                .get("<path>")
+                .get(<path>)
             .then()
 >>
 postRequest(path) ::= <<
@@ -68,28 +88,16 @@ deleteRequest(path) ::= <<
             .then()
 >>
 
-makeRequest(request, headers, method) ::= <<
-<request>
-<headers>
-<method>
->>
-
 
 assertStatusCode(code) ::= <<
                 .statusCode(<code>)
 >>
 assertBodyContains(prop) ::= <<
-                .body(containsString("<prop>"))
+                .body("<prop>", notNullValue())
 >>
 assertBodyExact(prop, value) ::= <<
-                .body("<prop>", equalTo("<value>"))
+                .body("<prop>", equalTo(<value>))
 >>
 assertResponseHeader(header, value) ::= <<
                 .header("<header>", containsString("<value>"))
->>
-
-validateRequest(responseCodeAssertion, responseBodyAssertions, responseHeadersAssertions) ::= <<
-<responseCodeAssertion>
-<responseBodyAssertions>
-<responseHeadersAssertions>
 >>

@@ -1,4 +1,4 @@
-TEST myTest {
+TEST myExampleTest {
     REQUEST {
         METHOD GET
         URL "https://api.example.com/users"
@@ -11,10 +11,8 @@ TEST myTest {
     }
     ASSERT {
         STATUS 200
-        BODY_CONTAINS "username"
-        BODY_CONTAINS "password"
-        BODY_EXACT "id" = "123"
-        BODY_EXACT "name" = "John Doe"
+        BODY_CONTAINS "username" "password" "email"
+        BODY_EXACT "id" = "123" "name" = "John Doe" "age" = "30"
         HEADER "Content-Type": "application/json" "Location": "https://api.example.com/users/123"
     }
 }
