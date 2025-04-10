@@ -6,7 +6,7 @@
                     .header("Authorization", "Bearer token")
                     .queryParam("id", 123)
                 .when()
-                    .get()
+                    .get("/test")
                 .then()
                     .statusCode(200)
                     .body("username", notNullValue())
@@ -18,3 +18,4 @@
                     .header("Content-Type", containsString("application/json"))
                     .header("Location", containsString("https://api.example.com/users/123"));
         }
+

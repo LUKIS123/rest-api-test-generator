@@ -69,7 +69,7 @@ public class Main {
     }
 
     private static void writeOutputFile(String content) {
-        File file = new File("src/main/resources/output.txt");
+        File file = new File("src/main/resources/output.java");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(content);
             System.out.println("File written successfully to: " + file.getAbsolutePath());

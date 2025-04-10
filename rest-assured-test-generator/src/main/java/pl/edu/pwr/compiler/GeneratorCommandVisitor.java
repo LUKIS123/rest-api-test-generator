@@ -13,6 +13,12 @@ import java.util.Map;
 
 public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     private final STGroup stGroup;
+    private static final Map<String, String> templateNameMap = Map.of(
+            "GET", "getRequest",
+            "POST", "postRequest",
+            "PUT", "putRequest",
+            "PATCH", "patchRequest",
+            "DELETE", "deleteRequest"); // statyczne
 
     public GeneratorCommandVisitor(STGroup stGroup) {
         super();
@@ -71,7 +77,7 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
             ST headersSt = visit(ctx.headers());
             requestSt.add("content2", headersSt);
-
+// poprawic
             ST querySt = visit(ctx.queryParams());
             requestSt.add("content3", querySt);
 
@@ -87,13 +93,6 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitMethod(TestGeneratorParser.MethodContext ctx) {
-        Map<String, String> templateNameMap = Map.of(
-                "GET", "getRequest",
-                "POST", "postRequest",
-                "PUT", "putRequest",
-                "PATCH", "patchRequest",
-                "DELETE", "deleteRequest");
-
         String templateName = templateNameMap.get(ctx.HTTP_METHOD().getText());
         if (templateName == null) {
             throw new IllegalArgumentException("Unknown method: " + ctx.HTTP_METHOD().getText());

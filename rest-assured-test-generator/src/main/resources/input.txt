@@ -1,6 +1,6 @@
 TEST myExampleTest {
     REQUEST {
-        METHOD GET
+        METHOD GET "/test"
         URL "https://api.example.com/users"
         HEADERS {
             "Authorization": "Bearer token"
@@ -12,7 +12,17 @@ TEST myExampleTest {
     ASSERT {
         STATUS 200
         BODY_CONTAINS "username" "password" "email"
-        BODY_EXACT "id" = "123" "name" = "John Doe" "age" = "30"
+        BODY_EXACT "list[0].id" = "123" "name" = "John Doe" "age" = "30"
         HEADER "Content-Type": "application/json" "Location": "https://api.example.com/users/123"
     }
 }
+
+
+
+
+
+
+// dopisać body przy POST,
+// refactoryzacja template (combined uzywac)
+// zrobic uruchamianie z cmd, args: plik wejscia wyjscia
+// moze zrobic zeby wypluwalo plain klase z JUNIT (bez spring zeby bylo uniwersalnie). nazwa klasy w pliku konfiguracyjnym, albo test nalezy do całej kalasy (jeden test nalezy do danej kalsY)
