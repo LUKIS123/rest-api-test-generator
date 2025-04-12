@@ -19,6 +19,7 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
             "PUT", "putRequest",
             "PATCH", "patchRequest",
             "DELETE", "deleteRequest");
+    private static final String defaultPackageName = "pl.edu.pwr";
 
     public GeneratorCommandVisitor(STGroup stGroup) {
         super();
@@ -51,16 +52,80 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitClassDef(TestGeneratorParser.ClassDefContext ctx) {
-        String testClassName = ctx.NAME().getText();
+        ST combinedTestTemplate = stGroup.getInstanceOf("combinedTemplate");
 
-        ST baseUrlSt = visit(ctx.url());
+        String testClass = ctx.CLASS_NAME().getText();
+        String[] testClassNameSplit = testClass.split("\\.");
+        String className = testClassNameSplit[testClassNameSplit.length - 1];
+        String packageName = defaultPackageName;
 
-        List<TestGeneratorParser.TestContext> testContexts = ctx.test();
-        for (TestGeneratorParser.TestContext testContext : testContexts) {
-            ST testMethodSt = visit(testContext);
+        try {
+
+            if (testClassNameSplit.length > 1) {
+                StringBuilder packageNameBuilder = new StringBuilder();
+                for (int i = 0; i < testClassNameSplit.length - 1; i++) {
+                    packageNameBuilder.append(testClassNameSplit[i]);
+                    if (i < testClassNameSplit.length - 2) {
+                        packageNameBuilder.append(".");
+                    }
+                }
+                packageName = packageNameBuilder.toString();
+            }
+
+            List<TestGeneratorParser.TestContext> testContexts = ctx.test();
+            for (TestGeneratorParser.TestContext testContext : testContexts) {
+                ST testMethodSt = visit(testContext);
+                combinedTestTemplate.add("content", testMethodSt);
+            }
+
+            if (ctx.baseUrl() != null) {
+                ST baseUrlSt = visit(ctx.baseUrl());
+                return stGroup.getInstanceOf("initTestClassWithBaseConfig")
+                        .add("package", packageName)
+                        .add("className", className)
+                        .add("baseConfig", baseUrlSt)
+                        .add("content", combinedTestTemplate);
+            }
+        } catch (Exception e) {
+            System.err.println("Error in class definition: " + e.getMessage());
         }
 
-        return super.visitClassDef(ctx);
+        return stGroup.getInstanceOf("initTestClass")
+                .add("package", packageName)
+                .add("className", className)
+                .add("content", combinedTestTemplate);
+    }
+
+    @Override
+    public ST visitBaseUrl(TestGeneratorParser.BaseUrlContext ctx) {
+        ST baseUrlSt = stGroup.getInstanceOf("combinedTemplate");
+        String url = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
+        try {
+            URI uri = new URI(url);
+
+            String baseURI = uri.getScheme() + "://" + uri.getHost();
+            ST classBaseUriSt = stGroup.getInstanceOf("classBaseUri")
+                    .add("baseUri", baseURI);
+            baseUrlSt.add("content", classBaseUriSt);
+
+            if (uri.getPort() != -1) {
+                int port = uri.getPort();
+                ST classPortSt = stGroup.getInstanceOf("classPort")
+                        .add("port", port);
+                baseUrlSt.add("content", classPortSt);
+            }
+
+            if (uri.getPath() != null && !uri.getPath().isEmpty()) {
+                String basePath = uri.getPath();
+                ST classBasePathSt = stGroup.getInstanceOf("classBasePath")
+                        .add("basePath", basePath);
+                baseUrlSt.add("content", classBasePathSt);
+            }
+
+            return baseUrlSt;
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid URL format: " + url, e);
+        }
     }
 
     @Override
@@ -86,15 +151,14 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     public ST visitRequest(TestGeneratorParser.RequestContext ctx) {
         ST requestSt = stGroup.getInstanceOf("combinedTemplate");
         try {
-            // TODO: w przyszłości można dodać opcję żeby globalnie ustawić adres bazowy
-            ST urlSt = visit(ctx.url());
-            requestSt.add("content", urlSt);
-
-            ST headersSt = visit(ctx.headers());
-            requestSt.add("content", headersSt);
-// poprawic
-            ST querySt = visit(ctx.queryParams());
-            requestSt.add("content", querySt);
+            List<TestGeneratorParser.RequestElementContext> requestElementContexts = ctx.requestElement();
+            for (TestGeneratorParser.RequestElementContext requestElementContext : requestElementContexts) {
+                ST elementSt = visit(requestElementContext);
+                if (elementSt == null) {
+                    continue;
+                }
+                requestSt.add("content", elementSt);
+            }
 
             ST methodSt = visit(ctx.method());
             requestSt.add("content", methodSt);
@@ -104,6 +168,26 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
         }
 
         return requestSt;
+    }
+
+    @Override
+    public ST visitRequestElement(TestGeneratorParser.RequestElementContext ctx) {
+        try {
+            if (ctx.url() != null) {
+                return visit(ctx.url());
+            } else if (ctx.headers() != null) {
+                return visit(ctx.headers());
+            } else if (ctx.body() != null) {
+                return visit(ctx.body());
+            } else if (ctx.queryParams() != null) {
+                return visit(ctx.queryParams());
+            }
+        } catch (Exception e) {
+            System.err.println("Error in request: " + e.getMessage());
+            e.printStackTrace(); // Print stack trace for debugging
+        }
+
+        return null;
     }
 
     @Override
@@ -132,8 +216,8 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
         try {
             URI uri = new URI(url);
 
-            Integer port = null;
             String baseURI = uri.getScheme() + "://" + uri.getHost();
+            Integer port = null;
             String basePath = null;
 
             if (uri.getPort() != -1) {
@@ -146,7 +230,10 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
             if (port != null) {
                 ST requestAddressWithPortSt = stGroup.getInstanceOf("requestWithPortAndPath");
-                requestAddressWithPortSt.add("uri", baseURI).add("port", port).add("path", basePath);
+                requestAddressWithPortSt.add("uri", baseURI).add("port", port);
+                if (basePath != null) {
+                    requestAddressWithPortSt.add("path", basePath);
+                }
                 return requestAddressWithPortSt;
             }
 
@@ -159,7 +246,6 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
             ST requestSt = stGroup.getInstanceOf("request");
             requestSt.add("uri", baseURI);
             return requestSt;
-
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URL format: " + url, e);
         }
@@ -211,12 +297,22 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     }
 
     @Override
+    public ST visitBody(TestGeneratorParser.BodyContext ctx) {
+        ST requestBody = stGroup.getInstanceOf("requestBody");
+        String body = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
+        return requestBody.add("body", body);
+    }
+
+    @Override
     public ST visitValidate(TestGeneratorParser.ValidateContext ctx) {
         ST validateSt = stGroup.getInstanceOf("combinedTemplate");
         try {
             List<TestGeneratorParser.ValidateElementContext> validateElementContexts = ctx.validateElement();
             for (TestGeneratorParser.ValidateElementContext validateElementContext : validateElementContexts) {
                 ST visitElementSt = visit(validateElementContext);
+                if (visitElementSt == null) {
+                    continue;
+                }
                 validateSt.add("content", visitElementSt);
             }
         } catch (Exception e) {
@@ -229,22 +325,20 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitValidateElement(TestGeneratorParser.ValidateElementContext ctx) {
-        ST validateSt = stGroup.getInstanceOf("combinedTemplate");
         try {
-            ST statusCodeSt = visit(ctx.statusCode());
-            validateSt.add("content", statusCodeSt);
-
-            ST bodyAssertionsSt = visit(ctx.responseBody());
-            validateSt.add("content", bodyAssertionsSt);
-
-            ST headerAssertionsSt = visit(ctx.responseHeaders());
-            validateSt.add("content", headerAssertionsSt);
+            if (ctx.statusCode() != null) {
+                return visit(ctx.statusCode());
+            } else if (ctx.responseBody() != null) {
+                return visit(ctx.responseBody());
+            } else if (ctx.responseHeaders() != null) {
+                return visit(ctx.responseHeaders());
+            }
         } catch (Exception e) {
             System.err.println("Error in validateElement: " + e.getMessage());
             e.printStackTrace(); // Print stack trace for debugging
         }
 
-        return validateSt;
+        return null;
     }
 
     @Override

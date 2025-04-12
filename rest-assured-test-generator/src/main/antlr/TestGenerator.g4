@@ -3,7 +3,7 @@ grammar TestGenerator;
 program : classDef* EOF;
 
 // Class definition
-classDef    : 'CLASS' NAME '{' url? test* '}';
+classDef    : 'CLASS' CLASS_NAME '{' baseUrl? test* '}';
 
 // Test definition
 test    : 'TEST' NAME '{' request validate '}';
@@ -16,6 +16,7 @@ requestElement  : url | headers | queryParams | body;
 method  : 'METHOD' HTTP_METHOD (STRING)?;
 
 // URL
+baseUrl : 'URL' STRING;
 url     : 'URL' STRING;
 
 // Headers
@@ -43,6 +44,7 @@ responseHeaders: 'HEADER' header+;
 // Tokens
 HTTP_METHOD : 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 NAME    : [a-zA-Z_][a-zA-Z0-9_]*;
+CLASS_NAME    : [a-zA-Z_][a-zA-Z0-9_.]*;
 STRING  : '"' (~["])* '"';
 INT     : [0-9]+;
 

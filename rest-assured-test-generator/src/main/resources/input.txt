@@ -1,4 +1,6 @@
 CLASS pl.edu.pwr.myExampleTestClass {
+    URL "http://localhost:8080/api/users"
+
     TEST myExampleTest {
         REQUEST {
             METHOD GET "/test"
@@ -36,9 +38,6 @@ CLASS pl.edu.pwr.myExampleTestClass {
         }
     }
 }
-
-
-
 
 // zrobic uruchamianie z cmd, args: plik wejscia wyjscia ---
 // dopisać body przy POST,    ---
