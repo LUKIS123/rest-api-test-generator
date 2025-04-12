@@ -6,23 +6,43 @@ deflt(elem) ::= <<
 combinedTemplate(content) ::= <<
 <content; separator="\n">
 >>
-twoSectionTemplate(content1, content2) ::= <<
-<content1>
-<content2>
->>
-threeSectionTemplate(content1, content2, content3) ::= <<
-<content1>
-<content2>
-<content3>
->>
-fourSectionTemplate(content1, content2, content3, content4) ::= <<
-<content1>
-<content2>
-<content3>
-<content4>
->>
 
+initTestClassWithBaseUrl(package, className, url, content) ::= <<
+package <package>;
 
+import io.restassured.RestAssured; // REST-assured library
+import io.restassured.http.ContentType; // REST-assured dependency
+import org.junit.jupiter.api.*; // JUnit
+
+import static io.restassured.RestAssured.given; // REST-assured given method
+import static org.hamcrest.Matchers.*; // Hamcrest matchers
+
+class <className> {
+
+    @BeforeEach
+    public void setup() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
+        RestAssured.basePath = "/api/example";
+    }
+
+<content>
+}
+>>
+initTestClass(package, name, content) ::= <<
+package <package>;
+
+import io.restassured.RestAssured; // REST-assured library
+import io.restassured.http.ContentType; // REST-assured dependency
+import org.junit.jupiter.api.*; // JUnit
+
+import static io.restassured.RestAssured.given; // REST-assured given method
+import static org.hamcrest.Matchers.*; // Hamcrest matchers
+
+class <className> {
+
+<content>
+>>
 initTestMethod(name, request, assert, close) ::= <<
     @Test
     void <name>() {
@@ -43,15 +63,17 @@ basePath(path) ::= <<
                 .basePath("<path>")
 >>
 
-requestFullAddress(uri, port, path) ::= <<
+requestWithPortAndPath(uri, port, path) ::= <<
 <baseUri(uri)>
 <port(port)>
 <basePath(path)>
 >>
-
-requestAddress(uri, path) ::= <<
+requestWithPath(uri, path) ::= <<
 <baseUri(uri)>
 <basePath(path)>
+>>
+request(uri) ::= <<
+<baseUri(uri)>
 >>
 
 requestHeaders(headerKey, headerValue) ::= <<

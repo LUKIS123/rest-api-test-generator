@@ -18,7 +18,7 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
             "POST", "postRequest",
             "PUT", "putRequest",
             "PATCH", "patchRequest",
-            "DELETE", "deleteRequest"); // statyczne
+            "DELETE", "deleteRequest");
 
     public GeneratorCommandVisitor(STGroup stGroup) {
         super();
@@ -50,6 +50,20 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     }
 
     @Override
+    public ST visitClassDef(TestGeneratorParser.ClassDefContext ctx) {
+        String testClassName = ctx.NAME().getText();
+
+        ST baseUrlSt = visit(ctx.url());
+
+        List<TestGeneratorParser.TestContext> testContexts = ctx.test();
+        for (TestGeneratorParser.TestContext testContext : testContexts) {
+            ST testMethodSt = visit(testContext);
+        }
+
+        return super.visitClassDef(ctx);
+    }
+
+    @Override
     public ST visitTest(TestGeneratorParser.TestContext ctx) {
         String testMethodName = ctx.NAME().getText();
         ST testMethodSt = stGroup.getInstanceOf("initTestMethod");
@@ -70,19 +84,20 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitRequest(TestGeneratorParser.RequestContext ctx) {
-        ST requestSt = stGroup.getInstanceOf("fourSectionTemplate");
+        ST requestSt = stGroup.getInstanceOf("combinedTemplate");
         try {
-            ST urlSt = visit(ctx.url()); // TODO: w przyszłości można dodać opcję żeby globalnie ustawić adres bazowy
-            requestSt.add("content1", urlSt);
+            // TODO: w przyszłości można dodać opcję żeby globalnie ustawić adres bazowy
+            ST urlSt = visit(ctx.url());
+            requestSt.add("content", urlSt);
 
             ST headersSt = visit(ctx.headers());
-            requestSt.add("content2", headersSt);
+            requestSt.add("content", headersSt);
 // poprawic
             ST querySt = visit(ctx.queryParams());
-            requestSt.add("content3", querySt);
+            requestSt.add("content", querySt);
 
             ST methodSt = visit(ctx.method());
-            requestSt.add("content4", methodSt);
+            requestSt.add("content", methodSt);
         } catch (Exception e) {
             System.err.println("Error in request: " + e.getMessage());
             e.printStackTrace(); // Print stack trace for debugging
@@ -130,14 +145,20 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
             }
 
             if (port != null) {
-                ST requestAddressWithPortSt = stGroup.getInstanceOf("requestFullAddress");
+                ST requestAddressWithPortSt = stGroup.getInstanceOf("requestWithPortAndPath");
                 requestAddressWithPortSt.add("uri", baseURI).add("port", port).add("path", basePath);
                 return requestAddressWithPortSt;
             }
 
-            ST requestAddressSt = stGroup.getInstanceOf("requestAddress");
-            requestAddressSt.add("uri", baseURI).add("path", basePath);
-            return requestAddressSt;
+            if (basePath != null) {
+                ST requestAddressSt = stGroup.getInstanceOf("requestWithPath");
+                requestAddressSt.add("uri", baseURI).add("path", basePath);
+                return requestAddressSt;
+            }
+
+            ST requestSt = stGroup.getInstanceOf("request");
+            requestSt.add("uri", baseURI);
+            return requestSt;
 
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URL format: " + url, e);
@@ -191,18 +212,35 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
 
     @Override
     public ST visitValidate(TestGeneratorParser.ValidateContext ctx) {
-        ST validateSt = stGroup.getInstanceOf("threeSectionTemplate");
+        ST validateSt = stGroup.getInstanceOf("combinedTemplate");
         try {
-            ST statusCodeSt = visit(ctx.statusCode());
-            validateSt.add("content1", statusCodeSt);
-
-            ST bodyAssertionsSt = visit(ctx.responseBody());
-            validateSt.add("content2", bodyAssertionsSt);
-
-            ST headerAssertionsSt = visit(ctx.responseHeaders());
-            validateSt.add("content3", headerAssertionsSt);
+            List<TestGeneratorParser.ValidateElementContext> validateElementContexts = ctx.validateElement();
+            for (TestGeneratorParser.ValidateElementContext validateElementContext : validateElementContexts) {
+                ST visitElementSt = visit(validateElementContext);
+                validateSt.add("content", visitElementSt);
+            }
         } catch (Exception e) {
             System.err.println("Error in validate: " + e.getMessage());
+            e.printStackTrace(); // Print stack trace for debugging
+        }
+
+        return validateSt;
+    }
+
+    @Override
+    public ST visitValidateElement(TestGeneratorParser.ValidateElementContext ctx) {
+        ST validateSt = stGroup.getInstanceOf("combinedTemplate");
+        try {
+            ST statusCodeSt = visit(ctx.statusCode());
+            validateSt.add("content", statusCodeSt);
+
+            ST bodyAssertionsSt = visit(ctx.responseBody());
+            validateSt.add("content", bodyAssertionsSt);
+
+            ST headerAssertionsSt = visit(ctx.responseHeaders());
+            validateSt.add("content", headerAssertionsSt);
+        } catch (Exception e) {
+            System.err.println("Error in validateElement: " + e.getMessage());
             e.printStackTrace(); // Print stack trace for debugging
         }
 

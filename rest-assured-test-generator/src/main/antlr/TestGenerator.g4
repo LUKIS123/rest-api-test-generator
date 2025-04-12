@@ -1,12 +1,16 @@
 grammar TestGenerator;
 
-program : test* EOF ;
+program : classDef* EOF;
 
-// Entry point
+// Class definition
+classDef    : 'CLASS' NAME '{' url? test* '}';
+
+// Test definition
 test    : 'TEST' NAME '{' request validate '}';
 
 // Request definition
-request : 'REQUEST' '{' method url (headers)? (queryParams)? (body)? '}';
+request : 'REQUEST' '{' method requestElement* '}';
+requestElement  : url | headers | queryParams | body;
 
 // HTTP method
 method  : 'METHOD' HTTP_METHOD (STRING)?;
@@ -26,9 +30,11 @@ queryParam  : STRING '=' STRING;
 body    : 'BODY' STRING;
 
 // Assertions
-validate       : 'ASSERT' '{' statusCode (responseBody)? (responseHeaders)? '}';
+validate       : 'ASSERT' '{' validateElement+ '}';
+validateElement : statusCode | responseBody | responseHeaders;
+
 statusCode     : 'STATUS' INT;
-responseBody   : (bodyContains | bodyExact)*;
+responseBody   : (bodyContains | bodyExact)+;
 bodyContains   : 'BODY_CONTAINS' STRING+;       // Check if a field exists
 bodyExact      : 'BODY_EXACT' bodyExactPair+;   // Check if a field has an exact value
 bodyExactPair  : STRING '=' STRING;
