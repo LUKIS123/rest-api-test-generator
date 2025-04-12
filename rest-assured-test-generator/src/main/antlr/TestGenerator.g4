@@ -28,7 +28,7 @@ queryParams : 'QUERY_PARAMS' '{' queryParam+ '}';
 queryParam  : STRING '=' STRING;
 
 // Request body
-body    : 'BODY' STRING;
+body    : 'BODY' RAW_STRING;
 
 // Assertions
 validate       : 'ASSERT' '{' validateElement+ '}';
@@ -46,6 +46,7 @@ HTTP_METHOD : 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 NAME    : [a-zA-Z_][a-zA-Z0-9_]*;
 CLASS_NAME    : [a-zA-Z_][a-zA-Z0-9_.]*;
 STRING  : '"' (~["])* '"';
+RAW_STRING : '"""' .*? '"""';
 INT     : [0-9]+;
 
 

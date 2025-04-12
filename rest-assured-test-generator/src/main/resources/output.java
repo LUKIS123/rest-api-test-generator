@@ -44,6 +44,19 @@
                     .basePath("/users")
                     .header("Authorization", "Bearer token")
                     .queryParam("id", 123)
+                    .contentType(ContentType.JSON)
+                    .body("""
+    {
+      "orderDate": "2025-03-27T15:59:42.752Z",
+      "customerName": "string",
+      "items": [
+        {
+          "productName": "string",
+          "quantity": 0,
+          "price": 0
+        }
+      ]
+    }""")
                 .when()
                     .get("/test")
                 .then()

@@ -100,8 +100,7 @@ requestQueryParams(queryKey, value) ::= <<
 requestBody(body) ::= <<
                 .contentType(ContentType.JSON)
                 .body("""
-<body>
-                        """)
+<body>""")
 >>
 
 getRequest(path) ::= <<

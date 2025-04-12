@@ -299,7 +299,9 @@ public class GeneratorCommandVisitor extends TestGeneratorBaseVisitor<ST> {
     @Override
     public ST visitBody(TestGeneratorParser.BodyContext ctx) {
         ST requestBody = stGroup.getInstanceOf("requestBody");
-        String body = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
+        String body = ctx.RAW_STRING().getText();
+        body = body.substring(3, body.length() - 3);
+        body = body.trim();
         return requestBody.add("body", body);
     }
 

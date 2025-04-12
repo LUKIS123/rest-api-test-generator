@@ -29,6 +29,19 @@ CLASS pl.edu.pwr.myExampleTestClass {
             QUERY_PARAMS {
                 "id" = "123"
             }
+            BODY
+"""
+{
+  "orderDate": "2025-03-27T15:59:42.752Z",
+  "customerName": "string",
+  "items": [
+    {
+      "productName": "string",
+      "quantity": 0,
+      "price": 0
+    }
+  ]
+}"""
         }
         ASSERT {
             STATUS 200
