@@ -114,7 +114,7 @@ class ExampleApiApplicationTests {
                 .post("/add")
                 .then()
                 .statusCode(201)
-                .header("Location", containsString("/api/example/"))
+                .header("Location", equalTo("/api/example/"))
                 .body(notNullValue()); // The ID in body
     }
 

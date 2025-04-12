@@ -1,28 +1,44 @@
-TEST myExampleTest {
-    REQUEST {
-        METHOD GET "/test"
-        URL "https://api.example.com/users"
-        HEADERS {
-            "Authorization": "Bearer token"
+CLASS pl.edu.pwr.myExampleTestClass {
+    URL "http://localhost:8080/api/users"
+
+    TEST myExampleTest {
+        REQUEST {
+            METHOD GET "/test"
+            URL "https://api.example.com/users"
+            HEADERS {
+                "Authorization": "Bearer token"
+            }
+            QUERY_PARAMS {
+                "id" = "123"
+            }
         }
-        QUERY_PARAMS {
-            "id" = "123"
+        ASSERT {
+            STATUS 200
+            BODY_CONTAINS "username" "password" "email"
+            BODY_EXACT "list[0].id" = "123" "name" = "John Doe" "age" = "30"
+            HEADER "Content-Type": "application/json" "Location": "https://api.example.com/users/123"
         }
     }
-    ASSERT {
-        STATUS 200
-        BODY_CONTAINS "username" "password" "email"
-        BODY_EXACT "list[0].id" = "123" "name" = "John Doe" "age" = "30"
-        HEADER "Content-Type": "application/json" "Location": "https://api.example.com/users/123"
+    TEST myExampleTest2 {
+        REQUEST {
+            METHOD GET "/test"
+            URL "https://api.example.com/users"
+            HEADERS {
+                "Authorization": "Bearer token"
+            }
+            QUERY_PARAMS {
+                "id" = "123"
+            }
+        }
+        ASSERT {
+            STATUS 200
+            BODY_CONTAINS "username" "password" "email"
+            BODY_EXACT "list[0].id" = "123" "name" = "John Doe" "age" = "30"
+            HEADER "Content-Type": "application/json" "Location": "https://api.example.com/users/123"
+        }
     }
 }
 
-
-
-
-
-
-// dopisać body przy POST,
-// refactoryzacja template (combined uzywac)
-// zrobic uruchamianie z cmd, args: plik wejscia wyjscia
+// zrobic uruchamianie z cmd, args: plik wejscia wyjscia ---
+// dopisać body przy POST,    ---
 // moze zrobic zeby wypluwalo plain klase z JUNIT (bez spring zeby bylo uniwersalnie). nazwa klasy w pliku konfiguracyjnym, albo test nalezy do całej kalasy (jeden test nalezy do danej kalsY)

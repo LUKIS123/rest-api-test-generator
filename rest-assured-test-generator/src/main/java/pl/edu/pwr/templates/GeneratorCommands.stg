@@ -6,32 +6,65 @@ deflt(elem) ::= <<
 combinedTemplate(content) ::= <<
 <content; separator="\n">
 >>
-twoSectionTemplate(content1, content2) ::= <<
-<content1>
-<content2>
+
+
+classBaseUri(baseUri) ::= <<
+        RestAssured.baseURI = "<baseUri>";
 >>
-threeSectionTemplate(content1, content2, content3) ::= <<
-<content1>
-<content2>
-<content3>
+classPort(port) ::= <<
+        RestAssured.port = <port>;
 >>
-fourSectionTemplate(content1, content2, content3, content4) ::= <<
-<content1>
-<content2>
-<content3>
-<content4>
+classBasePath(basePath) ::= <<
+        RestAssured.basePath = "<basePath>";
+>>
+initTestClassWithBaseConfig(package, className, baseConfig, content) ::= <<
+package <package>;
+
+import io.restassured.RestAssured; // REST-assured library
+import io.restassured.http.ContentType; // REST-assured dependency
+import org.junit.jupiter.api.*; // JUnit
+
+import static io.restassured.RestAssured.given; // REST-assured given method
+import static org.hamcrest.Matchers.*; // Hamcrest matchers
+
+class <className> {
+
+    @BeforeEach
+    public void setup() {
+<baseConfig>
+    }
+
+<content>
+}
+
+>>
+initTestClass(package, className, content) ::= <<
+package <package>;
+
+import io.restassured.RestAssured; // REST-assured library
+import io.restassured.http.ContentType; // REST-assured dependency
+import org.junit.jupiter.api.*; // JUnit
+
+import static io.restassured.RestAssured.given; // REST-assured given method
+import static org.hamcrest.Matchers.*; // Hamcrest matchers
+
+class <className> {
+
+<content>
+}
+
 >>
 
 
-initTestMethod(name, request, assert, close) ::= <<
+initTestMethod(name, request, assert) ::= <<
     @Test
     void <name>() {
         given()
 <request>
 <assert>;
     }
->>
 
+>>
 
 baseUri(uri) ::= <<
                 .baseUri("<uri>")
@@ -43,15 +76,17 @@ basePath(path) ::= <<
                 .basePath("<path>")
 >>
 
-requestFullAddress(uri, port, path) ::= <<
+requestWithPortAndPath(uri, port, path) ::= <<
 <baseUri(uri)>
 <port(port)>
 <basePath(path)>
 >>
-
-requestAddress(uri, path) ::= <<
+requestWithPath(uri, path) ::= <<
 <baseUri(uri)>
 <basePath(path)>
+>>
+request(uri) ::= <<
+<baseUri(uri)>
 >>
 
 requestHeaders(headerKey, headerValue) ::= <<
@@ -62,6 +97,13 @@ requestQueryParams(queryKey, value) ::= <<
                 .queryParam("<queryKey>", <value>)
 >>
 
+requestBody(body) ::= <<
+                .contentType(ContentType.JSON)
+                .body("""
+<body>
+                        """)
+>>
+
 getRequest(path) ::= <<
             .when()
                 .get(<path>)
@@ -69,22 +111,22 @@ getRequest(path) ::= <<
 >>
 postRequest(path) ::= <<
             .when()
-                .post("<path>")
+                .post(<path>)
             .then()
 >>
 putRequest(path) ::= <<
             .when()
-                .put("<path>")
+                .put(<path>)
             .then()
 >>
 patchRequest(path) ::= <<
             .when()
-                .patch("<path>")
+                .patch(<path>)
             .then()
 >>
 deleteRequest(path) ::= <<
             .when()
-                .delete("<path>")
+                .delete(<path>)
             .then()
 >>
 
@@ -99,5 +141,5 @@ assertBodyExact(prop, value) ::= <<
                 .body("<prop>", equalTo(<value>))
 >>
 assertResponseHeader(header, value) ::= <<
-                .header("<header>", containsString("<value>"))
+                .header("<header>", equalTo("<value>"))
 >>
