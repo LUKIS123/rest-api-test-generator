@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'antlr'
+    id 'application'
 }
 
 group = 'pl.edu.pwr'
@@ -8,6 +9,11 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainModule = 'pl.edu.pwr'
+    mainClass = 'pl.edu.pwr.Main'
 }
 
 dependencies {
@@ -19,8 +25,6 @@ dependencies {
     implementation "org.antlr:antlr4-runtime:4.13.2"
     // https://mvnrepository.com/artifact/org.antlr/antlr4
     implementation "org.antlr:antlr4:4.13.2"
-    // https://mvnrepository.com/artifact/org.antlr/ST4
-    implementation "org.antlr:ST4:4.3.4"
 }
 
 test {
@@ -47,4 +51,19 @@ sourceSets {
 
 tasks.build {
     dependsOn tasks.generateGrammarSource
+}
+
+jar {
+    from sourceSets.main.allSource
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'pl.edu.pwr.Main'
+    }
+    archiveBaseName = project.name + '-all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
