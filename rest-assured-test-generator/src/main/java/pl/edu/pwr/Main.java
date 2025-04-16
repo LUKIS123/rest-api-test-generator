@@ -49,6 +49,9 @@ public class Main {
         System.out.println(render);
         System.out.println("===================================");
 
-        FileUtils.saveToFile(toolArguments.outputFilePath(), render);
+        String outputFile = toolArguments.outputFilePath() != null
+                ? toolArguments.outputFilePath()
+                : "./out.java";
+        FileUtils.saveToFile(outputFile, render);
     }
 }
