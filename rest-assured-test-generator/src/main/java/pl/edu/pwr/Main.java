@@ -13,6 +13,8 @@ import pl.edu.pwr.utility.CommandLineParser;
 import pl.edu.pwr.utility.FileUtils;
 import pl.edu.pwr.utility.ToolArguments;
 
+import java.net.URL;
+
 public class Main {
     public static void main(String[] args) {
         ToolArguments toolArguments = CommandLineParser.parseCommandLine(args);
@@ -34,7 +36,13 @@ public class Main {
         ParseTree tree = parser.program();
         // System.out.println(tree.toStringTree(parser));
 
-        STGroup group = new STGroupFile("src/main/java/pl/edu/pwr/templates/GeneratorCommands.stg");
+        URL resource = Main.class.getResource("/templates/GeneratorCommands.stg");
+        if (resource == null) {
+            throw new IllegalArgumentException("Template file not found in resources!");
+        }
+        STGroup group = new STGroupFile(resource, "UTF-8", '<', '>');
+        // STGroup group = new STGroupFile("src/main/java/pl/edu/pwr/templates/GeneratorCommands.stg");
+
         // create a visitor to traverse the parse tree
         GeneratorCommandVisitor visitor = new GeneratorCommandVisitor(group);
         ST res = visitor.visit(tree);

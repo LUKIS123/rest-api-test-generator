@@ -1,0 +1,144 @@
+group TestGenerator;
+
+deflt(elem) ::= <<
+    <elem; separator="\n">
+>>
+combinedTemplate(content) ::= <<
+<content; separator="\n">
+>>
+
+
+classBaseUri(baseUri) ::= <<
+        RestAssured.baseURI = "<baseUri>";
+>>
+classPort(port) ::= <<
+        RestAssured.port = <port>;
+>>
+classBasePath(basePath) ::= <<
+        RestAssured.basePath = "<basePath>";
+>>
+initTestClassWithBaseConfig(package, className, baseConfig, content) ::= <<
+package <package>;
+
+import io.restassured.RestAssured; // REST-assured library
+import io.restassured.http.ContentType; // REST-assured dependency
+import org.junit.jupiter.api.*; // JUnit
+
+import static io.restassured.RestAssured.given; // REST-assured given method
+import static org.hamcrest.Matchers.*; // Hamcrest matchers
+
+class <className> {
+
+    @BeforeEach
+    public void setup() {
+<baseConfig>
+    }
+
+<content>
+}
+
+>>
+initTestClass(package, className, content) ::= <<
+package <package>;
+
+import io.restassured.RestAssured; // REST-assured library
+import io.restassured.http.ContentType; // REST-assured dependency
+import org.junit.jupiter.api.*; // JUnit
+
+import static io.restassured.RestAssured.given; // REST-assured given method
+import static org.hamcrest.Matchers.*; // Hamcrest matchers
+
+class <className> {
+
+<content>
+}
+
+>>
+
+
+initTestMethod(name, request, assert) ::= <<
+    @Test
+    void <name>() {
+        given()
+<request>
+<assert>;
+    }
+
+>>
+
+baseUri(uri) ::= <<
+                .baseUri("<uri>")
+>>
+port(port) ::= <<
+                .port(<port>)
+>>
+basePath(path) ::= <<
+                .basePath("<path>")
+>>
+
+requestWithPortAndPath(uri, port, path) ::= <<
+<baseUri(uri)>
+<port(port)>
+<basePath(path)>
+>>
+requestWithPath(uri, path) ::= <<
+<baseUri(uri)>
+<basePath(path)>
+>>
+request(uri) ::= <<
+<baseUri(uri)>
+>>
+
+requestHeaders(headerKey, headerValue) ::= <<
+                .header("<headerKey>", "<headerValue>")
+>>
+
+requestQueryParams(queryKey, value) ::= <<
+                .queryParam("<queryKey>", <value>)
+>>
+
+requestBody(body) ::= <<
+                .contentType(ContentType.JSON)
+                .body("""
+<body>""")
+>>
+
+getRequest(path) ::= <<
+            .when()
+                .get(<path>)
+            .then()
+>>
+postRequest(path) ::= <<
+            .when()
+                .post(<path>)
+            .then()
+>>
+putRequest(path) ::= <<
+            .when()
+                .put(<path>)
+            .then()
+>>
+patchRequest(path) ::= <<
+            .when()
+                .patch(<path>)
+            .then()
+>>
+deleteRequest(path) ::= <<
+            .when()
+                .delete(<path>)
+            .then()
+>>
+
+
+assertStatusCode(code) ::= <<
+                .statusCode(<code>)
+>>
+assertBodyContains(prop) ::= <<
+                .body("<prop>", notNullValue())
+>>
+assertBodyExact(prop, value) ::= <<
+                .body("<prop>", equalTo(<value>))
+>>
+assertResponseHeader(header, value) ::= <<
+                .header("<header>", equalTo("<value>"))
+>>
